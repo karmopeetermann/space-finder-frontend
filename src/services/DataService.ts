@@ -1,25 +1,55 @@
+import { config, S3 } from "aws-sdk";
+import { ICreateSpaceState } from "../components/spaces/CreateSpace";
 import { Space } from "../model/Model";
+import { generateRandomId } from "../utils/utils";
+import {config as appConfig} from './config'
 
+config.update({
+    region: appConfig.REGION
+})
 
 export class DataService{
+
+    public async createSpace(iCreateSpace: ICreateSpaceState){
+        if (iCreateSpace.photo) {
+            const photoUrl = await this.uploadPublicFile(
+                iCreateSpace.photo,
+                appConfig.SPACES_PHOTOS_BUCKET
+            )
+            iCreateSpace.photoURL = photoUrl;
+            iCreateSpace.photo = undefined;
+        }
+        const requestUrl = appConfig.api.spacesUrl;
+        const requestOptions: RequestInit = {
+            method: 'POST',
+            body: JSON.stringify(iCreateSpace)
+        }
+        const result = await fetch(requestUrl, requestOptions);
+        const resultJson = await result.json();
+        return JSON.stringify(resultJson.id);
+    }
+
+    private async uploadPublicFile(file: File, bucket: string){
+        const fileName = generateRandomId() + file.name;
+        const uploadResult = await new S3({region: appConfig.REGION}).upload({
+            Bucket: bucket,
+            Key: fileName,
+            Body: file,
+            ACL: 'public-read'
+        }).promise();
+
+        return uploadResult.Location;
+    }
+
     public async getSpaces(): Promise <Space[]>{
-        const result: Space[] = [];
-        result.push({
-            location: 'Paris',
-            name: 'Best location',
-            spaceId: '123'
-        });
-        result.push({
-            location: 'Paris',
-            name: 'Best location',
-            spaceId: '124'
-        });
-        result.push({
-            location: 'Paris',
-            name: 'Best location',
-            spaceId: '125'
-        });
-        return result;
+        const requestUrl = appConfig.api.spacesUrl;
+        const requestResult = await fetch(
+            requestUrl, {
+                method: 'GET'
+            }
+        );
+        const responseJSON = await requestResult.json();
+        return responseJSON;
     }
 
     public async reserveSpace(spaceId: string): Promise<string | undefined> {

@@ -3,10 +3,10 @@ import { Auth } from 'aws-amplify';
 import { Amplify}  from 'aws-amplify'; 
 import { config } from './config';
 import { CognitoUser } from '@aws-amplify/auth';
-
+import { Credentials } from 'aws-sdk';  
 
 Amplify.configure({
-    Auth: {
+    Auth: { 
         mandatorySignIn: false,
         region: config.REGION,
         userPoolId: config.USER_POOL_ID,
@@ -29,6 +29,35 @@ export class AuthService {
             return undefined;
         }
         
+    }
+
+    public async getAWSTemporaryCreds(user: CognitoUser){
+        var AWS = require('aws-sdk');
+        const cognitoIdentityPool = `cognito-idp.${config.REGION}.amazonaws.com/${config.USER_POOL_ID}`;
+        AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+            IdentityPoolId: config.IDENTITY_POOL_ID,
+            Logins: {
+                [cognitoIdentityPool]: user.getSignInUserSession()!.getIdToken().getJwtToken()
+            }
+        },
+            {
+                region: config.REGION
+        })
+
+        await this.refreshCredentials();
+    }
+
+    private async refreshCredentials(): Promise<void>{
+        var AWS = require('aws-sdk');
+        return new Promise((resolve, reject)=>{
+            (AWS.config.credentials as Credentials).refresh(err =>{
+                if (err) {
+                    reject(err)
+                } else {
+                    resolve()
+                }
+            })
+        })
     }
 
     public async getUserAttributes(user: User):Promise<UserAttribute[]>{

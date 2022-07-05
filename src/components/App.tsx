@@ -9,6 +9,7 @@ import { Home } from './Home';
 import { Profile } from './Profile';
 import { Spaces } from './spaces/Spaces';
 import { DataService } from '../services/DataService';
+import { CreateSpace } from './spaces/CreateSpace';
 
 
 interface AppState{
@@ -30,11 +31,11 @@ export class App extends React.Component<{}, AppState> {
     this.setUser = this.setUser.bind(this);
   }
 
-  private setUser(user: User){ 
+  private async setUser(user: User){ 
     this.setState({
       user: user
     })
-    console.log('setting ths user!: ' + user);
+    await this.authService.getAWSTemporaryCreds(user.cognitoUser);
   }
 
   render(){
@@ -54,6 +55,9 @@ export class App extends React.Component<{}, AppState> {
               </Route>
               <Route exact path='/spaces'>
                 <Spaces dataService={this.dataService}/>
+              </Route>
+              <Route exact path='/createspace'>
+                <CreateSpace dataService={this.dataService}/>
               </Route>
 
             </Switch>

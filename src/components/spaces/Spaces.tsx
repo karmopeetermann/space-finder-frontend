@@ -1,4 +1,5 @@
 import { Component, ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { Space } from "../../model/Model";
 import { DataService } from "../../services/DataService";
 import { ConfirmModalComponent } from "./ConfirmModalComponent";
@@ -55,6 +56,7 @@ export class Spaces extends Component<SpacesProps, SpacesState> {
                 <SpaceComponent
                     location={space.location}
                     name={space.name}
+                    photoURL={space.photoURL}
                     spaceId={space.spaceId}
                     reserveSpace={this.reserveSpace}
                 />
@@ -75,6 +77,7 @@ export class Spaces extends Component<SpacesProps, SpacesState> {
         <div>
             <>
                 <h2>Welcome to the Spaces Page!</h2>
+                <Link to='/createspace'>Create space</Link><br></br>
                 {this.renderSpaces()}
                 <ConfirmModalComponent 
                     close={this.closeModal} 
